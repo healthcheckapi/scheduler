@@ -9,7 +9,7 @@ def handle_proto_file(supabase, path, file, api_id):
 
 
 def compile_all_proto_files(path):
-  protoc_cmd = "python -m grpc_tools.protoc --proto_path=%s --python_out=%s --grpc_python_out=%s %s/*.proto" % (path, path, path, path)
+  protoc_cmd = "python3 -m grpc_tools.protoc --proto_path=%s --python_out=%s --grpc_python_out=%s %s/*.proto" % (path, path, path, path)
   print("Compiling all proto files...")
   print(protoc_cmd)
   os.system(protoc_cmd)

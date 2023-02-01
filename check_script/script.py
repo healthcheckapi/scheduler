@@ -1,16 +1,13 @@
 import os
+import sys
+import json
+import importlib
 from dotenv import load_dotenv
+from handle_protos import handle_protos
 from supabase import create_client, Client
 import generate_check_client as generate_client
-import importlib
-from file_manager import make_module, create_directory_if_not_exist, upsert_file
-from handle_protos import handle_protos
-import json
-
-import time
-from timeloop import Timeloop
-from datetime import timedelta
 from google.protobuf.json_format import MessageToJson
+from file_manager import make_module, create_directory_if_not_exist, upsert_file
 
 load_dotenv()
 
@@ -19,11 +16,6 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-check_id = 'd9bd2ce6-9aa2-4145-bcbb-4ba8aca489b9'
-
-tl = Timeloop()
-
-PROTOS_PATH = "tmp/checks/%s" % check_id
 
 def fetch_entity(supabase, table, entity_id, column_eq = "id"):
     response = supabase.table(table).select("*").eq(column_eq, entity_id).execute()
@@ -34,7 +26,7 @@ def fetch_entity(supabase, table, entity_id, column_eq = "id"):
 
     return response.data[0]
 
-@tl.job(interval=timedelta(minutes=1))
+
 def execute_check():
     print('---------------------------------------')
     print("Executing check %s..." % check_id)
@@ -48,18 +40,46 @@ def execute_check():
     print("Check: ", check)
     print("API: ", api)
 
+    print("Creating directory %s" % check_path)
+
     create_directory_if_not_exist('tmp')
     create_directory_if_not_exist('tmp/checks')
     create_directory_if_not_exist(check_path)
     make_module(check_path)
 
+    print("Created directory %s" % check_path)
+    print("Handling protos...")
+
     handle_protos(supabase, check_path, check["api_id"])
+
+    print("Handled protos.")
+    print("Generating client...")
 
     content = generate_client.generate_client(api['url'], "recommendations", check['service'], check['method'], "RecommendationRequest")
 
+    print("Generated client.")
+    print("Upserting client.py...")
+
     upsert_file("%s/client.py" % check_path, content)
 
-    result = importlib.import_module('%s.client' % check_path.replace('/', '.')).make_request()
+    print("Upserted client.py.")
+
+    print("current directory: ", os.getcwd())
+
+    current_path = (os.getcwd() if os.getcwd()[0] != '/' else os.getcwd()[1:]).replace('/', '.')
+
+    client_module_path = current_path + '.' + check_path.replace('/', '.')
+    print("client module path: ", client_module_path)
+
+    print("Importing client...")
+    client = importlib.import_module('%s.client' % check_path.replace('/', '.'))
+    # client = importlib.import_module('%s.client' % client_module_path)
+
+    print("Making request...")
+
+    result = client.make_request()
+
+    print("Made request.")
 
     print("Result: ", result)
 
@@ -68,17 +88,32 @@ def execute_check():
     error = json.dumps(result['error'])
     status = result['status']
 
+    print("Inserting check result...")
     supabase.table("check_results").insert({ 'check_id': check_id, 'response': response, 'latency': latency, 'status': status, 'error': error }).execute()
+    print("Inserted check result.")
 
+    print("Removing directory %s" % check_path)
     os.system("rm -rf %s" % check_path)
 
-    print()
+    print("Removed directory %s" % check_path)
 
     print("Done executing check %s." % check_id)
     print('---------------------------------------')
 
 
 if __name__ == "__main__":
-    tl.start(block=True)
-    # execute_check()
+    print("sys.argv: ", sys.argv)
 
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <check_id>")
+        exit(1)
+
+    check_id = sys.argv[1]
+    print("check_id: ", check_id)
+
+    if len(sys.argv) > 2:
+        working_dir = sys.argv = sys.argv[2]
+        print("Changing working directory from %s to %s" % (os.getcwd(), working_dir))
+        os.chdir(working_dir)
+
+    execute_check()
