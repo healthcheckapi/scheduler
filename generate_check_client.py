@@ -17,11 +17,15 @@ def generate_client(url, proto_name, serviceName, methodName, requestName):
 
   # Get response
   content.append('def make_request():')
+  content.append('\ttry:')
 
-  content.append('\tstart = time.time()')
-  content.append('\tresponse = client.%s(request)' % methodName)
-  content.append('\tend = time.time()')
+  content.append('\t\tstart = time.time()')
+  content.append('\t\tresponse = client.%s(request)' % methodName)
+  content.append('\t\tend = time.time()')
 
-  content.append('\treturn {"response": response, "time": end - start}')
+  content.append('\t\treturn {"response": response, "time": end - start}')
+
+  content.append('\texcept Exception as e:')
+  content.append('\t\treturn {"error": e}')
 
   return '\n'.join(content)

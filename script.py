@@ -11,28 +11,47 @@ load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-check_id = 'check_id'
+check_id = 'd9bd2ce6-9aa2-4145-bcbb-4ba8aca489b9'
 
 PROTOS_PATH = "tmp/checks/%s" % check_id
+
+def fetch_entity(supabase, table, entity_id, column_eq = "id"):
+    response = supabase.table(table).select("*").eq(column_eq, entity_id).execute()
+
+    if (response.data is None or len(response.data) == 0):
+        print("Something went wrong while fetching %s[%s = %s]." % (table, column_eq, entity_id))
+        exit(1)
+
+    return response.data[0]
 
 
 if __name__ == "__main__":
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+    check = fetch_entity(supabase, "checks", check_id)
+    api = fetch_entity(supabase, "apis", check["api_id"])
+    files = fetch_entity(supabase, "files", check["api_id"], "api_id")
+
+    print(check)
+    print(api)
+
+    check_path = "tmp/checks/%s" % check_id
+
+
     create_directory_if_not_exist('tmp')
     create_directory_if_not_exist('tmp/checks')
-    create_directory_if_not_exist(PROTOS_PATH)
-    make_module(PROTOS_PATH)
+    create_directory_if_not_exist(check_path)
+    make_module(check_path)
 
-    handle_protos(supabase, PROTOS_PATH, check_id)
+    handle_protos(supabase, check_path, check["api_id"])
 
-    content = generate_client.generate_client("vitoria-example.fly.dev:9090", "recommendations", "Recommendations", "Recommend", "RecommendationRequest")
+    content = generate_client.generate_client(api['url'], "recommendations", check['service'], check['method'], "RecommendationRequest")
 
-    upsert_file("%s/client.py" % PROTOS_PATH, content)
+    upsert_file("%s/client.py" % check_path, content)
 
-    result = importlib.import_module('tmp.checks.check_id.client').make_request()
+    result = importlib.import_module('%s.client' % check_path.replace('/', '.')).make_request()
 
     print(result)
 
-    os.system("rm -rf %s" % PROTOS_PATH)
+    os.system("rm -rf %s" % check_path)
 

@@ -17,7 +17,7 @@ def compile_all_proto_files(path):
 
 
 def fix_import(path):
-  cmd = "cd tmp/checks/check_id && sed -i 's/^\(import.*pb2\)/from . \%s/g' *.py" % "1"
+  cmd = "cd %s && sed -i 's/^\(import.*pb2\)/from . \%s/g' *.py" % (path, "1")
   os.system(cmd)
 
 
