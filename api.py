@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 api = Api(app)
 # cron = CronTab(tabfile='healthcheck-cron.tab')
-cron = CronTab(user='vitoria')
+cron = CronTab(user='root')
 
 class SchedulerList(Resource):
   parser = reqparse.RequestParser()
