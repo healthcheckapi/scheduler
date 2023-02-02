@@ -35,7 +35,7 @@ RUN mkdir /home/myuser/code
 WORKDIR /home/myuser/code
 COPY . .
 
-RUN cron -e
+RUN crontab -e
 EXPOSE 5000
 
 # make sure all messages always reach console
