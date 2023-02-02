@@ -22,6 +22,8 @@ FROM ubuntu:20.04 AS runner-image
 RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3-venv && \
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get install -y cron
+
 RUN useradd --create-home myuser
 COPY --from=builder-image /home/myuser/venv /home/myuser/venv
 
@@ -29,9 +31,6 @@ USER myuser
 RUN mkdir /home/myuser/code
 WORKDIR /home/myuser/code
 COPY . .
-
-RUN apt-get update
-RUN apt-get install -y cron
 
 EXPOSE 5000
 
