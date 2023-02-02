@@ -5,6 +5,8 @@ FROM ubuntu:20.04 AS builder-image
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
 
+RUN pwd
+
 RUN apt-get update
 RUN apt-get -y install cron
 
