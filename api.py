@@ -5,8 +5,9 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-# cron = CronTab(tabfile='healthcheck-cron.tab')
-cron = CronTab(user='myuser')
+cron = CronTab(user='root')
+
+os.system("service cron start")
 
 class SchedulerList(Resource):
   parser = reqparse.RequestParser()
@@ -16,9 +17,11 @@ class SchedulerList(Resource):
     self.parser.add_argument('interval', type=int, required=True, help="This field cannot be left blank!")
     data = self.parser.parse_args()
 
-    print(type(data['interval']))
+    path = '/healthcheck/check_script'
 
-    job = cron.new(command='/usr/bin/python3 /home/vitoria/Documents/healthcheckapi/healthcheck/check_script/script.py %s %s >> /tmp/out.txt' % (data['check_id'], os.getcwd() + '/check_script'), comment=data['check_id'])
+    print("path: ", path)
+
+    job = cron.new(command='/home/myuser/venv/bin/python %s/script.py %s %s >> /tmp/out.txt' % (path, data['check_id'], path), comment=data['check_id'])
     job.minute.every(data['interval'])
 
     cron.write()
@@ -50,4 +53,4 @@ api.add_resource(SchedulerList, '/scheduler')
 api.add_resource(Scheduler, '/scheduler/<check_id>')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)

@@ -116,4 +116,8 @@ if __name__ == "__main__":
         print("Changing working directory from %s to %s" % (os.getcwd(), working_dir))
         os.chdir(working_dir)
 
-    execute_check()
+    try:
+        execute_check()
+    except Exception as e:
+        print("Something went wrong while executing check %s." % check_id)
+        print(e)

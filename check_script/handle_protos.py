@@ -1,5 +1,6 @@
 from file_manager import upsert_file
 import os
+import subprocess
 
 def handle_proto_file(supabase, path, file, api_id):
   file_content = supabase.storage().from_("protos").download(api_id + '/' + file["name"])
@@ -9,11 +10,15 @@ def handle_proto_file(supabase, path, file, api_id):
 
 
 def compile_all_proto_files(path):
-  protoc_cmd = "python3 -m grpc_tools.protoc --proto_path=%s --python_out=%s --grpc_python_out=%s %s/*.proto" % (path, path, path, path)
+  protoc_cmd = "/home/myuser/venv/bin/python -m grpc_tools.protoc --proto_path=%s --python_out=%s --grpc_python_out=%s %s/*.proto" % (path, path, path, path)
   print("Compiling all proto files...")
   print(protoc_cmd)
-  os.system(protoc_cmd)
-  print("Done compiling all proto files.")
+  erorr = subprocess.run(protoc_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.decode('utf-8')
+
+  if erorr:
+    print("Error while compiling protos: ", erorr)
+  else:
+    print("Done compiling all proto files.")
 
 
 def fix_import(path):
