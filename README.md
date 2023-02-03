@@ -39,3 +39,10 @@ Example:
 ## `DELETE` - `/scheduler/<check_id>`
 
 Deletes the scheduler for the given check id.
+
+## How to run
+
+```sh
+docker build . -f Dockerfile -tcp healthcheck-scheduler
+docker run -p 0.0.0.0:5000:5000/tcp healthcheck-scheduler
+```
