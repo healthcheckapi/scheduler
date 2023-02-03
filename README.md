@@ -7,7 +7,6 @@ Creates a new scheduler for the given check to run every T interval (minutes).
 Body example:
 
 ```json
-// /scheduler
 {
     "check_id": "d9bd2ce6-9aa2-4145-bcbb-4ba8aca489b9",
     "interval": 15 // 15 minutes
