@@ -43,6 +43,6 @@ Deletes the scheduler for the given check id.
 ## How to run
 
 ```sh
-docker build . -f Dockerfile -tcp healthcheck-scheduler
+docker build . -f Dockerfile -t healthcheck-scheduler
 docker run -p 0.0.0.0:5000:5000/tcp healthcheck-scheduler
 ```
